@@ -18,3 +18,9 @@ terraform.tfvars
 
 # mac
 Icon?
+# ansible generated inventory
+ansible/inventories/generated/
+ansible/inventories/lab.ini
+
+# terraform local state/lock
+terraform/.terraform/

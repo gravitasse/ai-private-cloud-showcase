@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    openstack = {
+      source  = "terraform-provider-openstack/openstack"
+      version = "~> 2.1.0"
+    }
+  }
+}
+
 provider "openstack" {
   auth_url    = var.os_auth_url
   tenant_name = var.os_tenant
@@ -5,10 +14,6 @@ provider "openstack" {
   password    = var.os_pass
   region      = "RegionOne"
 }
-
-variable "control_count" { type = number }
-variable "nvidia_gpu_count" { type = number }
-variable "intel_gpu_count" { type = number }
 
 resource "openstack_compute_instance_v2" "ctrl" {
   count       = var.control_count
