@@ -1,6 +1,8 @@
-- name: Example Ansible playbook
-  hosts: localhost
-  tasks:
-    - name: Print hello
-      debug:
-        msg: "Hello from the AI Private Cloud showcase!"
+- name: Example Kubernetes cluster build
+  hosts: all
+  become: true
+  roles:
+    - base-os
+    - k8s-control
+    - gpu-nvidia
+    - platform-apps

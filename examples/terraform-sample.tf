@@ -1,12 +1,18 @@
 terraform {
   required_providers {
-    local = {
-      source = "hashicorp/local"
-    }
+    local = { source = "hashicorp/local" }
   }
 }
 
-resource "local_file" "example" {
-  filename = "example.txt"
-  content  = "This demonstrates local Terraform provider use."
+# Example output file (used by Ansible)
+resource "local_file" "inventory" {
+  filename = "../ansible/inventory/hosts.ini"
+  content  = <<EOT
+[k8s_control]
+10.0.0.10 ansible_user=ubuntu
+
+[k8s_workers]
+10.0.0.11 ansible_user=ubuntu
+10.0.0.12 ansible_user=ubuntu
+EOT
 }
