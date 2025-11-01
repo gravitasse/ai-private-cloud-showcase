@@ -1,42 +1,24 @@
-# AI Private Cloud Infrastructure – Technical Overview
+# AI Private Cloud – Overview
 
-## Purpose
-This document describes the architecture, automation flow, and scaling model of the AI Private Cloud project. It corresponds to the private, full version and to the public-safe showcase repository.
+## Architecture Overview
+This section describes the high-level layout of the private AI cloud: control plane, worker/GPU nodes, storage, networking, and ingress. It aligns with the topology diagram in `diagrams/ai-private-cloud-topology.png`.
 
-## Architecture
-- Provisioning (Terraform)
-- Configuration (Ansible)
-- Orchestration (Kubernetes)
-- Multi-cloud / DR (Terraform + DNS)
+## Linear Scaling Model
+This platform is designed to start from a minimal node count (1–3 nodes) and scale linearly by adding more workers. Terraform provisions infra, Ansible joins new nodes to Kubernetes, and workloads are scheduled automatically.
 
-## Linear Scaling
-1. Add nodes in Terraform
-2. terraform apply
-3. Re-run Ansible
-4. GPU operator detects new capacity
+## Multi-Cloud / Failover Pattern
+Primary runs in AWS, secondary in GCP (or other provider). DNS (Route 53) performs health checks on the primary entrypoint and fails over to the secondary cluster. See `diagrams/multicloud-failover.png`.
+
+## GPU / NPU Enablement
+Clusters can be equipped with NVIDIA or Intel GPU/NPU plugins. AI workloads (Ollama, Open WebUI, LM Studio-backed services) can request GPU resources via Kubernetes resource requests.
 
 ## Deployment Flow (reference)
-1. terraform init / terraform apply
-2. ansible-playbook -i inventories/lab.ini site.yml
-3. kubectl apply -f examples/k8s-gpu-operator-sample.yaml
+1. Terraform: provision infra (VMs / instances / network)
+2. Ansible: configure OS + install Kubernetes + join nodes
+3. Kubernetes: deploy AI services (Ollama, inference APIs, observability)
+4. (Optional) Multicloud: enable DNS failover + cross-cloud replication
 
-## Links
-Public showcase (safe to share):
-https://github.com/gravitasse/ai-private-cloud-showcase
-
-\`\`\`bash
-terraform init
-terraform apply
-ansible-playbook -i inventories/lab.ini site.yml
-kubectl apply -f examples/k8s-gpu-operator-sample.yaml
-\`\`\`
-
-
-## Table of Contents
-- [Purpose](#purpose)
-- [Architecture Overview](#architecture-overview)
-- [Linear Scaling Model](#linear-scaling-model)
-- [Multi-Cloud / Failover Pattern](#multi-cloud--failover-pattern)
-- [GPU / NPU Enablement](#gpu--npu-enablement)
-- [Deployment Flow (reference)](#deployment-flow-reference)
-- [Repository Links](#repository-links)
+## Repository Links
+- Public showcase (this repo): https://github.com/gravitasse/ai-private-cloud-showcase
+- Private implementation: gravitasse/ai-private-cloud (not public)
+- Diagrams: [Topology](../diagrams/ai-private-cloud-topology.png), [Multi-Cloud Failover](../diagrams/multicloud-failover.png)
