@@ -28,3 +28,11 @@ See the `examples/` folder for sanitized Terraform, Ansible inventory, and playb
 ## Access
 
 Full repo and automations are private and available on request.
+
+## Diagrams
+
+### AI Private Cloud Topology
+![AI Private Cloud Topology](diagrams/ai-private-cloud-topology.png)
+
+### Multi-Cloud Failover
+![Multi-Cloud Failover](diagrams/multicloud-failover.png)
