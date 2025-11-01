@@ -1,19 +1,42 @@
-# Multi-Cloud AI Failover (AWS EKS + GCP GKE + Route 53)
+# Multi-Cloud AI Failover — AWS EKS + GCP GKE + Route 53
 
-This folder extends the base AI private cloud to run in **two clouds** at once and to **fail over** if the primary cloud (AWS) becomes unhealthy.
+This extension adds **cross-cloud failover and redundancy** to the base AI private-cloud platform.  
+Primary workloads run on **AWS EKS**, while a standby cluster on **GCP GKE** is kept in sync.  
+Failover is handled automatically by AWS Route 53 health checks.
 
-- **Primary:** AWS EKS (GPU nodes via ASG / node groups)
-- **Secondary:** GCP GKE (GPU node pool, e.g. A2)
-- **Failover:** AWS Route 53 health checks + failover A records
-- **Sync:** Ansible playbook that runs on macOS and applies manifests to both kube contexts
+---
 
-## Structure
+## ☁️ Design Goals
+
+| Goal | Description |
+|------|--------------|
+| High availability | Maintain live inference endpoints even if one provider fails |
+| Vendor diversity | Mix NVIDIA (AWS) and Intel (GCP) GPUs |
+| IaC parity | Same Terraform modules, parameterized per-cloud |
+| Declarative sync | Ansible mirrors manifests across kube contexts |
+
+---
+
+## ⚙️ Components
+
+| Layer | Provider | Tool | Purpose |
+|-------|-----------|------|----------|
+| Compute | AWS EKS | Terraform | Primary GPU cluster |
+| Compute | GCP GKE | Terraform | Secondary cluster |
+| DNS | AWS Route 53 | Terraform | Health checks + failover |
+| Sync | macOS / CI | Ansible + kubectl | Manifest replication |
+
+---
+
+## 📂 Folder Layout
 
 ```text
 multicloud/
 ├── terraform/
-│   ├── aws/            # EKS: cluster + GPU autoscaling group
-│   ├── gcp/            # GKE: cluster + GPU node pool
-│   └── dns-failover/   # Route 53 health checks + failover records
+│   ├── aws/            # Primary EKS
+│   ├── gcp/            # Secondary GKE
+│   └── dns-failover/   # Route 53 records + health checks
 └── ansible/
-    └── site.yml        # kubectl --context=eks / --context=gke apply ...
+    └── site.yml        # Applies workloads to both contexts
+eof
+eol

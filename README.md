@@ -6,11 +6,12 @@ Terraform provisions the compute (OpenStack, XCP-ng, or other), and Ansible conf
 
 ## Features
 
-- Kubernetes install via Ansible (kubeadm control plane + workers)
-- GPU support for NVIDIA (GPU Operator) and Intel/Habana (device plugins)
-- macOS-safe: tasks detect Darwin and skip Linux-only steps
+- Terraform-driven provisioning that also writes the Ansible inventory
+- Ansible playbook with OS-aware roles (`base-os`, `k8s-control`, `k8s-worker`)
+- GPU support for **NVIDIA** (GPU Operator) and **Intel/Habana** (device plugins)
+- macOS-safe: localhost is generated as `ansible_become=false`
 - Optional platform layer: Argo CD, AI namespaces, KServe/Ollama
-- Extensible: multi-cloud failover (see `multicloud/`)
+- Optional **multi-cloud failover** (AWS EKS → GCP GKE) via Route 53
 
 ## Folder Structure
 
@@ -18,15 +19,7 @@ Terraform provisions the compute (OpenStack, XCP-ng, or other), and Ansible conf
 ai-private-cloud/
 ├── ansible/       # OS + K8s automation (mac-safe)
 ├── terraform/     # Node provisioning + inventory generation
-├── k8s/           # Example manifests for GPU workloads
-├── docs/          # BOMs / presales notes
-└── multicloud/    # AWS + GCP failover extension
-
-## Running from macOS
-
-This repo is designed to let you develop on macOS and deploy to Linux:
-
-- \`ansible/inventories/generated/hosts.ini\` → localhost only, no sudo
-- \`ansible/inventories/lab.ini\` → real Ubuntu/K8s nodes, with sudo
-- Playbooks detect \`ansible_os_family == "Darwin"\` and skip Linux-only tasks
-
+├── multicloud/    # AWS + GCP failover extension
+├── k8s/           # (optional) sample workloads
+├── docs/          # diagrams, presales notes (add your Canva/Keynote exports here)
+└── .github/       # CI (ansible-lint)
