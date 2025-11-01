@@ -1,8 +1,0 @@
-# OpenStack example
-os_auth_url = "https://openstack.example.com:5000/v3"
-os_tenant   = "demo"
-os_user     = "demo"
-os_pass     = "CHANGEME"
-control_count    = 1
-nvidia_gpu_count = 1
-intel_gpu_count  = 0
