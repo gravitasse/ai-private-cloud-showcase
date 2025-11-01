@@ -1,0 +1,6 @@
+- name: Example Ansible playbook
+  hosts: localhost
+  tasks:
+    - name: Print hello
+      debug:
+        msg: "Hello from the AI Private Cloud showcase!"
