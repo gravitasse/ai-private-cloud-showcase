@@ -1,34 +1,39 @@
+---
+# Master playbook for Tyson's AI private cloud
+# Runs on: control plane, GPU nodes (NVIDIA + Intel/Gaudi)
+# NOTE: macOS targets will skip Linux-specific tasks
+
 - name: 00 Base OS prep
   hosts: all
   become: true
   roles:
     - base-os
 
-- name: 01 K8s control plane
+- name: 01 Kubernetes control plane
   hosts: k8s_control
   become: true
   roles:
     - k8s-control
 
-- name: 02 K8s workers
+- name: 02 Kubernetes workers
   hosts: k8s_workers
   become: true
   roles:
     - k8s-worker
 
-- name: 03 GPU – NVIDIA
+- name: 03 NVIDIA GPU enablement
   hosts: k8s_nvidia
   become: true
   roles:
     - gpu-nvidia
 
-- name: 04 GPU – Intel / Gaudi
+- name: 04 Intel / Gaudi GPU enablement
   hosts: k8s_intel
   become: true
   roles:
     - gpu-intel
 
-- name: 05 Platform apps
+- name: 05 Platform apps (Argo CD / AI namespace)
   hosts: k8s_control
   become: true
   roles:
