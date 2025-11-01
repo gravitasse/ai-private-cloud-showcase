@@ -13,7 +13,7 @@ spec:
         name: nvidia-device-plugin
     spec:
       containers:
-      - image: nvcr.io/nvidia/k8s-device-plugin:latest
-        name: nvidia-device-plugin
+      - name: nvidia-device-plugin
+        image: nvcr.io/nvidia/k8s-device-plugin:latest
         securityContext:
           privileged: true
