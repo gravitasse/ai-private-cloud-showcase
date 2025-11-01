@@ -1,38 +1,41 @@
-# AI Private Cloud (Showcase)
+# AI Private Cloud Showcase
 
-This is a public-safe overview of a modular Terraform + Ansible + Kubernetes architecture for deploying GPU-accelerated AI clusters on private or hybrid infrastructure.
+This repository is the **public / recruitable** showcase for the private project at `gravitasse/ai-private-cloud`.  
+It contains diagrams, sanitized examples, and the high-level description of the platform.
 
-The full automation (with roles, Terraform modules, GPU operators, and multi-cloud failover) lives in a **private repository**. This repo is meant to show the approach, not to expose secrets.
+---
 
-## Architecture Overview
+## 🚀 AI Private Cloud Multi-Cloud Failover Platform
 
-![AI Private Cloud Topology](diagrams/ai-private-cloud-topology.png)
+This project demonstrates a **private AI cloud** architecture for **inference and training workloads**, supporting **multi-cloud redundancy**, **GPU acceleration**, and **Ollama-based LLM deployments** on Kubernetes.
 
-### Layers
+### Key Capabilities
+- 🧩 **Terraform + Ansible** – full-stack infrastructure-as-code automation
+- ☁️ **AWS (Primary)** & **GCP (Secondary)** – DNS-based failover (Route 53 health checks)
+- 🎛️ **Kubernetes GPU clusters** – optimized for AI/ML (NVIDIA + Intel support)
+- 🧠 **Ollama integration** – self-hosted LLM inference inside the private cluster
+- 🔄 **Model / artifact sync** – replication between clouds for seamless failover
+- 📊 **Observability** – Prometheus / Grafana / Loki pattern for monitoring
 
-| Layer | Function |
-|-------|----------|
-| Control (macOS) | Runs Terraform + Ansible from a laptop |
-| Private Cloud | OpenStack / XCP-ng / on-prem K8s cluster |
-| GPU Nodes | NVIDIA + Intel/Habana workers via device plugins |
-| Multi-Cloud | Optional AWS ↔ GCP failover using Route 53 |
+---
 
-## Stack
+## Architecture Visuals
 
-Terraform · Ansible · Kubernetes · OpenStack · AWS EKS · GCP GKE · Argo CD · NVIDIA GPU Operator · Intel Habana
+| AI Private Cloud Topology | Multi-Cloud Failover |
+|---------------------------|-----------------------|
+| ![AI Private Cloud Topology](diagrams/ai-private-cloud-topology.png) | ![Multi-Cloud Failover](diagrams/multicloud-failover.png) |
 
-## Examples
+---
 
-See the `examples/` folder for sanitized Terraform, Ansible inventory, and playbook samples.
+## Use Cases
+- Private AI inference & LLM serving with **data sovereignty**
+- Hybrid (on-prem + cloud) model training pipelines
+- Zero-downtime **multi-cloud** AI infrastructure
+- Self-hosted **Ollama**, **LM Studio**, **Open WebUI** clusters
 
-## Access
+---
 
-Full repo and automations are private and available on request.
+## Related Repos
+- Private full implementation (infra + ansible + k8s): **not public**
+- Public diagrams & examples: this repo
 
-## Diagrams
-
-### AI Private Cloud Topology
-![AI Private Cloud Topology](diagrams/ai-private-cloud-topology.png)
-
-### Multi-Cloud Failover
-![Multi-Cloud Failover](diagrams/multicloud-failover.png)
