@@ -1,4 +1,3 @@
-# general
 .DS_Store
 
 # python
@@ -7,6 +6,9 @@ __pycache__/
 .venv/
 venv/
 
+# ansible
+*.retry
+
 # terraform
 .terraform/
 *.tfstate
@@ -14,8 +16,5 @@ venv/
 crash.log
 terraform.tfvars
 
-# ansible
-*.retry
-
-# k8s
-*.log
+# mac
+Icon?
