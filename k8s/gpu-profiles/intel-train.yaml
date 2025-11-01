@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: intel-train
+spec:
+  restartPolicy: Never
+  containers:
+  - name: train
+    image: vault.habana.ai/gaudi/pt:latest
+    resources:
+      limits:
+        habana.ai/gaudi: 1
+    nodeSelector:
+      feature.node.kubernetes.io/intel.gpu: "true"

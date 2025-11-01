@@ -1,0 +1,22 @@
+- name: Update apt cache
+  apt: update_cache: yes
+
+- name: Install base packages
+  apt:
+    name:
+      - curl
+      - git
+      - vim
+      - containerd
+      - python3-pip
+    state: present
+
+- name: Disable swap
+  command: swapoff -a
+  when: ansible_swaptotal_mb | int > 0
+
+- name: Comment swap in fstab
+  replace:
+    path: /etc/fstab
+    regexp: '(^/swap.*)'
+    replace: '# \1'

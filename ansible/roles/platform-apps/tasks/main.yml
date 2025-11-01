@@ -1,0 +1,13 @@
+- name: Install Argo CD
+  command: kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  args:
+    creates: /tmp/argocd.done
+
+- name: Create AI namespace
+  command: kubectl create ns ai-apps
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  register: ns_ai
+  failed_when: ns_ai.rc not in [0,1]
