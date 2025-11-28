@@ -23,7 +23,7 @@ This project demonstrates a **private AI cloud** architecture for **inference an
 
 | AI Private Cloud Topology | Multi-Cloud Failover |
 |---------------------------|----------------------|
-| ![AI Private Cloud Topology](diagrams/ai-private-cloud-topology.png) | ![Multi-Cloud Failover](diagrams/multicloud-failover.png) |
+| ![AI Private Cloud Topology](diagrams/ai-private-cloud-topology-v2.png) | ![Multi-Cloud Failover](diagrams/multicloud-failover-v2.png) |
 
 ---
 
@@ -51,3 +51,12 @@ This repo also includes the skeletal infrastructure code behind the diagrams:
   - roles for base OS, GPU nodes (Intel/NVIDIA), k8s control-plane/worker nodes, and platform apps
 - `tools/docker/` – dev container definition for a reproducible Terraform/Ansible CLI environment
 - `Makefile` – helper targets for running Terraform and Ansible locally or inside the dev container
+
+<details>
+<summary>Legacy diagrams (v1)</summary>
+
+| AI Private Cloud Topology (v1) | Multi-Cloud Failover (v1) |
+|--------------------------------|---------------------------|
+| ![AI Private Cloud Topology (v1)](diagrams/ai-private-cloud-topology.png) | ![Multicloud Failover (v1)](diagrams/multicloud-failover.png) |
+
+</details>
