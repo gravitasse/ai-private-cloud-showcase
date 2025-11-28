@@ -39,3 +39,15 @@ This project demonstrates a **private AI cloud** architecture for **inference an
 - Full private codebase: `gravitasse/ai-private-cloud` (private)
 - Public diagrams & examples: **this repo**
 
+## Repository Layout (Infra Snapshot)
+
+This repo also includes the skeletal infrastructure code behind the diagrams:
+
+- `terraform/` – HCL modules and environments:
+  - `modules/network`, `modules/k8s-cluster`
+  - `envs/dev/aws` plus examples for OpenStack and inventory templating
+- `ansible/` – inventories, playbooks, and roles:
+  - `bootstrap`, `k8s-cluster`, `gpu-nodes`, `site.yml`
+  - roles for base OS, GPU nodes (Intel/NVIDIA), k8s control-plane/worker nodes, and platform apps
+- `tools/docker/` – dev container definition for a reproducible Terraform/Ansible CLI environment
+- `Makefile` – helper targets for running Terraform and Ansible locally or inside the dev container
