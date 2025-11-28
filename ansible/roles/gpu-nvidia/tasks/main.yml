@@ -1,0 +1,16 @@
+- name: Add NVIDIA helm repo
+  command: helm repo add nvidia https://nvidia.github.io/gpu-operator
+  args:
+    creates: /root/.local/share/helm/repository/nvidia-index.yaml
+
+- name: Update helm repos
+  command: helm repo update
+
+- name: Install NVIDIA GPU Operator
+  command: >
+    helm upgrade --install gpu-operator nvidia/gpu-operator
+    --namespace gpu-operator --create-namespace
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  run_once: true
+  delegate_to: "{{ groups['k8s_control'][0] }}"

@@ -1,0 +1,35 @@
+# Only do apt stuff on Debian/Ubuntu
+- name: Update apt cache (Debian/Ubuntu)
+  apt:
+    update_cache: yes
+  when: ansible_os_family == "Debian"
+
+- name: Install base packages (Debian/Ubuntu)
+  apt:
+    name:
+      - curl
+      - git
+      - vim
+      - containerd
+      - python3-pip
+    state: present
+  when: ansible_os_family == "Debian"
+
+# On macOS we just no-op for now
+- name: Ensure basic tools on macOS (noop for now)
+  debug:
+    msg: "macOS host detected, skipping Linux-specific base-os tasks"
+  when: ansible_os_family == "Darwin"
+
+- name: Disable swap (Linux only)
+  command: swapoff -a
+  when:
+    - ansible_os_family != "Darwin"
+    - ansible_swaptotal_mb | int > 0
+
+- name: Comment swap in fstab (Linux only)
+  replace:
+    path: /etc/fstab
+    regexp: '(^/swap.*)'
+    replace: '# \1'
+  when: ansible_os_family != "Darwin"

@@ -1,0 +1,3 @@
+- name: Placeholder - configure GPU node
+  ansible.builtin.debug:
+    msg: "Install GPU drivers / CUDA / container runtime GPU config here"

@@ -1,0 +1,13 @@
+- name: Ensure base packages are installed
+  ansible.builtin.package:
+    name:
+      - curl
+      - vim
+      - git
+    state: present
+
+- name: Ensure time sync service is running (systemd-timesyncd example)
+  ansible.builtin.service:
+    name: systemd-timesyncd
+    enabled: true
+    state: started

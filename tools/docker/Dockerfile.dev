@@ -1,0 +1,21 @@
+FROM ubuntu:24.04
+
+# Basic deps + ansible-core
+RUN apt-get update && apt-get install -y \
+    curl \
+    unzip \
+    git \
+    python3 \
+    python3-pip \
+    python3-venv \
+    ssh \
+    ansible-core \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Terraform
+ARG TF_VERSION=1.9.8
+RUN curl -fsSL "https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip" -o /tmp/terraform.zip \
+    && unzip /tmp/terraform.zip -d /usr/local/bin \
+    && rm /tmp/terraform.zip
+
+WORKDIR /workspace

@@ -1,0 +1,6 @@
+cluster_name: dev-ai-gpu-cluster
+environment: dev
+cloud_provider: aws
+
+# Default SSH user for your AMI (adjust as needed)
+ansible_user: ubuntu

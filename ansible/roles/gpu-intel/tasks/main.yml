@@ -1,0 +1,18 @@
+- name: Add Intel helm repo
+  command: helm repo add intel https://intel.github.io/helm-charts
+  run_once: true
+  delegate_to: "{{ groups['k8s_control'][0] }}"
+
+- name: Update helm repos
+  command: helm repo update
+  run_once: true
+  delegate_to: "{{ groups['k8s_control'][0] }}"
+
+- name: Install Intel device plugins operator
+  command: >
+    helm upgrade --install intel-plugins intel/intel-device-plugins-operator
+    --namespace intel-plugins --create-namespace
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  run_once: true
+  delegate_to: "{{ groups['k8s_control'][0] }}"

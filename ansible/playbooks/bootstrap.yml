@@ -1,0 +1,6 @@
+- name: Base OS bootstrap
+  hosts: all
+  become: true
+
+  roles:
+    - role: base

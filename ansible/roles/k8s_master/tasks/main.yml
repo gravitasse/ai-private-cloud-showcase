@@ -1,0 +1,7 @@
+- name: Placeholder - install container runtime on master
+  ansible.builtin.debug:
+    msg: "Install container runtime for Kubernetes master here"
+
+- name: Placeholder - initialize Kubernetes control plane
+  ansible.builtin.debug:
+    msg: "Run kubeadm init and configure control plane here"

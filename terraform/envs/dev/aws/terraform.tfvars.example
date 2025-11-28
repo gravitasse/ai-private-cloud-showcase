@@ -1,0 +1,15 @@
+aws_region          = "us-west-2"
+environment         = "dev"
+cluster_name        = "dev-ai-gpu-cluster"
+
+vpc_cidr            = "10.0.0.0/16"
+public_subnet_cidrs = ["10.0.1.0/24", "10.0.2.0/24"]
+
+master_count         = 1
+worker_count         = 2
+instance_type_master = "t3.medium"
+instance_type_worker = "t3.large"
+
+ssh_key_name   = "your-ssh-key-name"
+master_ami_id  = "ami-xxxxxxxx"
+worker_ami_id  = "ami-xxxxxxxx"

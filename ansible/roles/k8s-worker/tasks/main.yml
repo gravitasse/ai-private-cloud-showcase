@@ -1,0 +1,12 @@
+- name: Install kube packages
+  apt:
+    name:
+      - kubelet=1.32.0-00
+      - kubeadm=1.32.0-00
+      - kubectl=1.32.0-00
+    state: present
+
+- name: Join cluster
+  command: "{{ hostvars[groups['k8s_control'][0]].kube_join_cmd }}"
+  args:
+    creates: /etc/kubernetes/kubelet.conf

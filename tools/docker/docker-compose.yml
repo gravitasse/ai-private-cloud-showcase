@@ -1,0 +1,16 @@
+services:
+  dev:
+    build:
+      # From tools/docker, "../.." is the repo root
+      context: ../..
+      dockerfile: tools/docker/Dockerfile.dev
+    working_dir: /workspace
+    volumes:
+      # Mount the repo root into /workspace in the container
+      - ../..:/workspace:rw
+      # Optional: pass through AWS + SSH config (read-only)
+      - ${HOME}/.aws:/root/.aws:ro
+      - ${HOME}/.ssh:/root/.ssh:ro
+    environment:
+      AWS_PROFILE: ${AWS_PROFILE}
+      AWS_REGION: ${AWS_REGION}

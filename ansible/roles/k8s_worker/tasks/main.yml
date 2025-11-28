@@ -1,0 +1,7 @@
+- name: Placeholder - install container runtime on worker
+  ansible.builtin.debug:
+    msg: "Install container runtime for Kubernetes worker here"
+
+- name: Placeholder - join worker node to cluster
+  ansible.builtin.debug:
+    msg: "Run kubeadm join (or equivalent) here"

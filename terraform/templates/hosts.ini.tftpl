@@ -1,0 +1,22 @@
+[k8s_control]
+%{ for ip in control_ips ~}
+ctrl-${ip} ansible_host=${ip}
+%{ endfor ~}
+
+[k8s_nvidia]
+%{ for ip in nvidia_ips ~}
+nvgpu-${ip} ansible_host=${ip}
+%{ endfor ~}
+
+[k8s_intel]
+%{ for ip in intel_ips ~}
+intgpu-${ip} ansible_host=${ip}
+%{ endfor ~}
+
+[k8s_workers:children]
+k8s_nvidia
+k8s_intel
+
+[k8s:children]
+k8s_control
+k8s_workers

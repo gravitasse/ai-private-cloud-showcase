@@ -24,3 +24,23 @@ ansible/inventories/lab.ini
 
 # terraform local state/lock
 terraform/.terraform/
+
+# === Terraform ===
+**/.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+
+# Keep real tfvars local; only commit terraform.tfvars.example
+terraform.tfvars
+
+# === Ansible ===
+*.retry
+
+# === macOS ===
+.DS_Store
+
+# === Editors / IDEs ===
+.vscode/
+.idea/

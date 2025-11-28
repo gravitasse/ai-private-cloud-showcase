@@ -1,0 +1,54 @@
+# Only install kube packages on Debian/Ubuntu (real control plane nodes)
+- name: Install kube packages (Debian/Ubuntu)
+  apt:
+    name:
+      - kubelet=1.32.0-00
+      - kubeadm=1.32.0-00
+      - kubectl=1.32.0-00
+    state: present
+  when: ansible_os_family == "Debian"
+
+# On macOS just noop so we can test the rest of the play
+- name: macOS detected, skipping kube package install
+  debug:
+    msg: "Darwin host - skipping kubeadm/kubelet/kubectl install"
+  when: ansible_os_family == "Darwin"
+
+# kubeadm init: only on real Linux control node
+- name: kubeadm init
+  command: >
+    kubeadm init
+    --pod-network-cidr=10.244.0.0/16
+    --control-plane-endpoint={{ ansible_host }}:6443
+  args:
+    creates: /etc/kubernetes/admin.conf
+  when: ansible_os_family == "Debian"
+
+# copy admin.conf to user (Linux only)
+- name: Copy admin.conf to ubuntu
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /home/ubuntu/.kube/config
+    owner: ubuntu
+    group: ubuntu
+    mode: 0600
+  when: ansible_os_family == "Debian"
+
+# install Cilium (Linux only)
+- name: Install Cilium
+  command: >
+    kubectl apply -f https://raw.githubusercontent.com/cilium/cilium/v1.16/install/kubernetes/quick-install.yaml
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  when: ansible_os_family == "Debian"
+
+# get join command (Linux only)
+- name: Get join command
+  command: kubeadm token create --print-join-command
+  register: join_cmd
+  when: ansible_os_family == "Debian"
+
+- name: Set fact for workers
+  set_fact:
+    kube_join_cmd: "{{ join_cmd.stdout | default('') }}"
+  when: ansible_os_family == "Debian"
