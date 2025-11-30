@@ -1,0 +1,178 @@
+# GPU Operator Configuration Values
+# NVIDIA GPU Operator with production-ready settings
+
+# Driver configuration
+driver:
+  enabled: true
+  version: "550.90.07"  # Pinned version for stability
+  repository: nvcr.io/nvidia
+  image: driver
+  imagePullPolicy: IfNotPresent
+  
+  # Use pre-compiled drivers for faster deployment
+  usePrecompiled: true
+  
+  # Driver manager configuration
+  manager:
+    env:
+      - name: ENABLE_GPU_POD_EVICTION
+        value: "true"
+      - name: ENABLE_AUTO_DRAIN
+        value: "false"  # Set to true for production with careful testing
+
+# Toolkit configuration (NVIDIA Container Toolkit)
+toolkit:
+  enabled: true
+  version: v1.14.6
+  repository: nvcr.io/nvidia/k8s
+  image: container-toolkit
+
+# Device Plugin configuration
+devicePlugin:
+  enabled: true
+  version: v0.14.5
+  
+  # Resource configuration
+  config:
+    name: time-slicing-config
+    create: true
+    default: "any"
+    data:
+      any: |-
+        version: v1
+        flags:
+          migStrategy: mixed
+        sharing:
+          timeSlicing:
+            renameByDefault: false
+            failRequestsGreaterThanOne: false
+            resources:
+              - name: nvidia.com/gpu
+                replicas: 4  # Allow 4 pods to share one GPU (dev/test)
+
+# DCGM Exporter for GPU metrics
+dcgmExporter:
+  enabled: true
+  version: 3.3.0-3.4.0
+  repository: nvcr.io/nvidia/k8s
+  image: dcgm-exporter
+  
+  # Service monitor for Prometheus integration
+  serviceMonitor:
+    enabled: true
+    interval: 15s
+    honorLabels: false
+    additionalLabels:
+      prometheus: kube-prometheus
+  
+  # Metrics configuration
+  env:
+    - name: DCGM_EXPORTER_LISTEN
+      value: ":9400"
+    - name: DCGM_EXPORTER_KUBERNETES
+      value: "true"
+
+# GPU Feature Discovery
+gfd:
+  enabled: true
+  version: v0.8.2
+  repository: nvcr.io/nvidia
+  image: gpu-feature-discovery
+  
+  # Node labeling configuration
+  nodeSelector:
+    nvidia.com/gpu.present: "true"
+
+# MIG Manager (Multi-Instance GPU)
+migManager:
+  enabled: true
+  version: v0.6.0
+  repository: nvcr.io/nvidia/cloud-native
+  image: k8s-mig-manager
+  
+  # MIG configuration
+  config:
+    name: mig-parted-config
+    default: "all-balanced"
+    data:
+      all-balanced: |-
+        version: v1
+        mig-configs:
+          all-balanced:
+            - devices: all
+              mig-enabled: true
+              mig-devices:
+                "1g.5gb": 7
+                "2g.10gb": 3
+                "3g.20gb": 2
+
+# Node Feature Discovery (NFD)
+nfd:
+  enabled: true
+  
+# Operator configuration
+operator:
+  # Default runtime class
+  defaultRuntime: containerd
+  
+  # Use host MOFED drivers (for InfiniBand/RDMA)
+  use_ocp_driver_toolkit: false
+  
+  # Init container configuration
+  initContainer:
+    image: cuda
+    repository: nvcr.io/nvidia
+    version: 12.3.1-base-ubi8
+    imagePullPolicy: IfNotPresent
+
+# Validator (optional - validates GPU setup)
+validator:
+  enabled: true
+  version: v23.9.1
+  repository: nvcr.io/nvidia/cloud-native
+  image: gpu-operator-validator
+  
+  # Validation plugin configuration
+  plugin:
+    env:
+      - name: WITH_WORKLOAD
+        value: "true"
+
+# Daemonset configuration
+daemonsets:
+  # Update strategy
+  updateStrategy: RollingUpdate
+  
+  # Rolling update configuration
+  rollingUpdate:
+    maxUnavailable: 1
+  
+  # Tolerations for GPU nodes
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Exists
+      effect: NoSchedule
+    - key: node-role.kubernetes.io/master
+      operator: Exists
+      effect: NoSchedule
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+
+# Node selector for GPU operator components
+nodeSelector:
+  nvidia.com/gpu.deploy.operator-validator: "true"
+
+# Tolerations for operator components
+tolerations:
+  - key: nvidia.com/gpu
+    operator: Exists
+    effect: NoSchedule
+
+# PSP (Pod Security Policy) - deprecated in K8s 1.25+
+psp:
+  enabled: false
+
+# PSA (Pod Security Admission)
+psa:
+  enabled: true
