@@ -1,15 +1,15 @@
-variable "cluster_name"           { type = string }
-variable "environment"            { type = string }
-variable "vpc_id"                 { type = string }
-variable "subnet_ids"             { type = list(string) }
-variable "aws_region"             { type = string }
-variable "master_count"           { type = number }
-variable "worker_count"           { type = number }
-variable "instance_type_master"   { type = string }
-variable "instance_type_worker"   { type = string }
-variable "ssh_key_name"           { type = string }
-variable "master_ami_id"          { type = string }
-variable "worker_ami_id"          { type = string }
+variable "cluster_name" { type = string }
+variable "environment" { type = string }
+variable "vpc_id" { type = string }
+variable "subnet_ids" { type = list(string) }
+variable "aws_region" { type = string }
+variable "master_count" { type = number }
+variable "worker_count" { type = number }
+variable "instance_type_master" { type = string }
+variable "instance_type_worker" { type = string }
+variable "ssh_key_name" { type = string }
+variable "master_ami_id" { type = string }
+variable "worker_ami_id" { type = string }
 
 resource "aws_security_group" "k8s" {
   name        = "${var.environment}-${var.cluster_name}-k8s-sg"
