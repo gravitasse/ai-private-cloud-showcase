@@ -1,0 +1,64 @@
+# Helm values for open-webui/open-webui chart
+# Repo: helm repo add open-webui https://helm.openwebui.com/
+# Install: helm upgrade --install open-webui open-webui/open-webui -n ollama -f open-webui-values.yaml
+#
+# Open WebUI connects to the Ollama service inside the cluster.
+# No GPU required — this is a pure web frontend.
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/open-webui/open-webui
+  tag: "main"
+  pullPolicy: IfNotPresent
+
+# ── Ollama backend ────────────────────────────────────────────────────────────
+# Points to the Ollama ClusterIP service deployed in the same namespace.
+ollama:
+  enabled: false  # We manage Ollama separately via ollama-values.yaml
+
+extraEnvVars:
+  - name: OLLAMA_BASE_URL
+    value: "http://ollama.ollama.svc.cluster.local:11434"
+  - name: WEBUI_AUTH
+    value: "true"
+  - name: WEBUI_NAME
+    value: "AI Private Cloud"
+
+# ── Persistent storage for user data / chat history ──────────────────────────
+persistence:
+  enabled: true
+  size: 10Gi
+  storageClass: ""
+  accessModes:
+    - ReadWriteOnce
+
+# ── Resources ─────────────────────────────────────────────────────────────────
+resources:
+  requests:
+    cpu: "500m"
+    memory: "512Mi"
+  limits:
+    cpu: "2"
+    memory: "2Gi"
+
+# ── Service ───────────────────────────────────────────────────────────────────
+service:
+  type: ClusterIP
+  port: 8080
+
+# ── Ingress ───────────────────────────────────────────────────────────────────
+# Enable when you have an ingress controller (nginx, Cilium Gateway API, etc.)
+ingress:
+  enabled: false
+  className: "nginx"
+  annotations: {}
+  hosts:
+    - host: ai.your-domain.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: open-webui-tls
+      hosts:
+        - ai.your-domain.com

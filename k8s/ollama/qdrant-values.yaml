@@ -1,0 +1,40 @@
+# Helm values for qdrant/qdrant chart
+# Repo: helm repo add qdrant https://qdrant.github.io/qdrant-helm/
+# Install: helm upgrade --install qdrant qdrant/qdrant -n ollama -f qdrant-values.yaml
+#
+# Qdrant is a vector database for RAG pipelines.
+# Pair with nomic-embed-text (pulled by Ollama) for local embedding + retrieval.
+
+replicaCount: 1
+
+image:
+  repository: qdrant/qdrant
+  tag: "v1.11.3"
+  pullPolicy: IfNotPresent
+
+# ── Persistent vector store ───────────────────────────────────────────────────
+persistence:
+  accessModes:
+    - ReadWriteOnce
+  size: 20Gi
+  storageClass: ""
+
+# ── Resources ─────────────────────────────────────────────────────────────────
+resources:
+  requests:
+    cpu: "500m"
+    memory: "1Gi"
+  limits:
+    cpu: "2"
+    memory: "4Gi"
+
+# ── Service ───────────────────────────────────────────────────────────────────
+service:
+  type: ClusterIP
+  port: 6333
+  grpcPort: 6334
+
+# ── Security — enable API key in production ───────────────────────────────────
+config:
+  service:
+    api_key: ""  # Set via a Kubernetes Secret in production

@@ -1,0 +1,77 @@
+# Helm values for ollama/ollama chart
+# Repo: helm repo add ollama https://otwld.github.io/ollama-helm/
+# Install: helm upgrade --install ollama ollama/ollama -n ollama --create-namespace -f ollama-values.yaml
+
+replicaCount: 1
+
+image:
+  repository: ollama/ollama
+  tag: "0.3.14"
+  pullPolicy: IfNotPresent
+
+# ── GPU ───────────────────────────────────────────────────────────────────────
+# Set to true to enable NVIDIA GPU. Requires NVIDIA GPU Operator on the cluster.
+gpu:
+  enabled: true
+  type: nvidia
+  number: 1
+
+# ── Persistent model storage ──────────────────────────────────────────────────
+# Models are large (7B ≈ 4GB, 70B ≈ 40GB). Size accordingly.
+persistentVolume:
+  enabled: true
+  size: 100Gi
+  storageClass: ""  # Leave empty to use cluster default (Longhorn, OpenEBS, etc.)
+  accessModes:
+    - ReadWriteOnce
+
+# ── Resources ─────────────────────────────────────────────────────────────────
+resources:
+  requests:
+    cpu: "4"
+    memory: "16Gi"
+    nvidia.com/gpu: "1"
+  limits:
+    cpu: "8"
+    memory: "32Gi"
+    nvidia.com/gpu: "1"
+
+# ── Node scheduling ───────────────────────────────────────────────────────────
+nodeSelector:
+  nvidia.com/gpu.present: "true"
+
+tolerations:
+  - key: nvidia.com/gpu
+    operator: Exists
+    effect: NoSchedule
+
+# ── Service ───────────────────────────────────────────────────────────────────
+service:
+  type: ClusterIP
+  port: 11434
+
+# ── Pre-pull models on startup ────────────────────────────────────────────────
+# Models listed here are pulled automatically when the pod initializes.
+# Comment out to start with an empty model store.
+ollama:
+  models:
+    - llama3.2
+    - nomic-embed-text   # lightweight embedding model for RAG
+
+# ── Liveness / readiness ──────────────────────────────────────────────────────
+livenessProbe:
+  httpGet:
+    path: /
+    port: 11434
+  initialDelaySeconds: 60
+  periodSeconds: 30
+  timeoutSeconds: 10
+  failureThreshold: 6
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: 11434
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5

@@ -16,6 +16,10 @@
   ansible.builtin.include_tasks: monitoring.yml
   when: ansible_os_family != "Darwin"
 
+- name: Include Ollama + Open WebUI + Qdrant tasks
+  ansible.builtin.include_tasks: ollama.yml
+  when: ansible_os_family != "Darwin"
+
 - name: Create AI namespace (Linux only)
   ansible.builtin.command: kubectl create ns ai-apps
   environment:

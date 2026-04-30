@@ -1,0 +1,105 @@
+---
+# Ollama + Open WebUI + Qdrant — AI inference stack inside the K8s cluster
+#
+# Prerequisites:
+#   - NVIDIA GPU Operator must be deployed (gpu-nvidia role)
+#   - A storage class must be available (Longhorn, OpenEBS, or FSx)
+#   - Helm must be installed on the control node
+
+- name: Add Ollama Helm repository
+  kubernetes.core.helm_repository:
+    name: ollama
+    repo_url: https://otwld.github.io/ollama-helm/
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  run_once: true
+  delegate_to: "{{ groups['k8s_control'][0] }}"
+
+- name: Add Open WebUI Helm repository
+  kubernetes.core.helm_repository:
+    name: open-webui
+    repo_url: https://helm.openwebui.com/
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  run_once: true
+  delegate_to: "{{ groups['k8s_control'][0] }}"
+
+- name: Add Qdrant Helm repository
+  kubernetes.core.helm_repository:
+    name: qdrant
+    repo_url: https://qdrant.github.io/qdrant-helm/
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  run_once: true
+  delegate_to: "{{ groups['k8s_control'][0] }}"
+
+- name: Create ollama namespace
+  kubernetes.core.k8s:
+    name: ollama
+    api_version: v1
+    kind: Namespace
+    state: present
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  run_once: true
+  delegate_to: "{{ groups['k8s_control'][0] }}"
+
+- name: Deploy Ollama (GPU-backed LLM server)
+  kubernetes.core.helm:
+    name: ollama
+    chart_ref: ollama/ollama
+    chart_version: "0.57.0"
+    release_namespace: ollama
+    create_namespace: false
+    values_files:
+      - "{{ playbook_dir }}/../k8s/ollama/ollama-values.yaml"
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  run_once: true
+  delegate_to: "{{ groups['k8s_control'][0] }}"
+
+- name: Deploy Open WebUI (chat frontend)
+  kubernetes.core.helm:
+    name: open-webui
+    chart_ref: open-webui/open-webui
+    chart_version: "3.3.0"
+    release_namespace: ollama
+    create_namespace: false
+    values_files:
+      - "{{ playbook_dir }}/../k8s/ollama/open-webui-values.yaml"
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  run_once: true
+  delegate_to: "{{ groups['k8s_control'][0] }}"
+
+- name: Deploy Qdrant (vector database for RAG)
+  kubernetes.core.helm:
+    name: qdrant
+    chart_ref: qdrant/qdrant
+    chart_version: "1.11.3"
+    release_namespace: ollama
+    create_namespace: false
+    values_files:
+      - "{{ playbook_dir }}/../k8s/ollama/qdrant-values.yaml"
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  run_once: true
+  delegate_to: "{{ groups['k8s_control'][0] }}"
+
+- name: Wait for Ollama rollout
+  ansible.builtin.command: >
+    kubectl rollout status deployment/ollama -n ollama --timeout=300s
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  changed_when: false
+  run_once: true
+  delegate_to: "{{ groups['k8s_control'][0] }}"
+
+- name: Wait for Open WebUI rollout
+  ansible.builtin.command: >
+    kubectl rollout status deployment/open-webui -n ollama --timeout=120s
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  changed_when: false
+  run_once: true
+  delegate_to: "{{ groups['k8s_control'][0] }}"

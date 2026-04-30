@@ -1,11 +1,19 @@
 # AI Private Cloud Showcase
 
-This repository is the **public showcase** for the private project at `gravitasse/ai-private-cloud`.  
+This repository is the **public showcase** for the private project at `gravitasse/ai-private-cloud`.
 It provides architecture diagrams, key design summaries, and a recruiter-safe description of the platform.
 
 ---
 
 ## 🔧 Recent Updates
+
+### April 2026 (continued) — GCP failover cluster + Ollama/Open WebUI/Qdrant in K8s
+
+- Built GCP Terraform modules (`gcp-network`, `gcp-k8s-cluster`) that mirror the existing AWS modules and complete the multi-cloud failover story — the Route 53 `global-routing` module now has a real GCP cluster to fail over to
+- GCP cluster supports GPU worker nodes (`guest_accelerator` + `scheduling.on_host_maintenance = TERMINATE`), static external IP for the K8s API LB, and a service account with least-privilege IAM bindings
+- Added `k8s/ollama/` Helm values for the full in-cluster AI inference stack: Ollama (GPU-backed, 100Gi model PVC, llama3.2 pre-pulled), Open WebUI (chat frontend), and Qdrant (vector DB for RAG)
+- Added `ansible/roles/platform-apps/tasks/ollama.yml` — deploys all three via Helm with rollout waits; wired into the main platform-apps play after monitoring
+- AI workloads now run **inside the K8s cluster**, not just in the `vps-docker/` Docker Compose stack
 
 ### April 2026 — Technical audit + full multi-platform hardening
 
@@ -41,21 +49,23 @@ This project demonstrates a **private AI cloud** architecture for **inference an
 
 ## 🧱 Architecture Visuals
 
-| AI Private Cloud Topology | Multi-Cloud Failover |
-|---------------------------|----------------------|
-| ![AI Private Cloud Topology](diagrams/ai-private-cloud-topology-v2.png) | ![Multi-Cloud Failover](diagrams/multicloud-failover-v2.png) |
+![AI Private Cloud Topology](diagrams/ai-private-cloud-topology-v2.png)
+
+![Multi-Cloud Failover](diagrams/multicloud-failover-v2.png)
 
 ---
 
 ## 💡 Use Cases
-- Private AI inference & LLM serving with **data sovereignty**  
-- Zero-downtime **multi-cloud** AI infrastructure via Route 53 Load Balancing  
-- Agnostic Enterprise Storage using Longhorn or OpenEBS  
-- Self-hosted **Ollama**, **n8n**, and **Open WebUI** clusters  
+
+- Private AI inference & LLM serving with **data sovereignty**
+- Zero-downtime **multi-cloud** AI infrastructure via Route 53 Load Balancing
+- Agnostic Enterprise Storage using Longhorn or OpenEBS
+- Self-hosted **Ollama**, **n8n**, and **Open WebUI** clusters
 
 ---
 
 ## 🔗 Related
+
 - Full private codebase: `gravitasse/ai-private-cloud` (private)
 - Public diagrams & examples: **this repo**
 
@@ -72,14 +82,6 @@ This repo also includes the skeletal infrastructure code behind the diagrams:
   - all roles support Debian/Ubuntu, RedHat/Rocky/Alma, and macOS/Windows noop guards
   - FQCN (`ansible.builtin.*`) throughout; lint-clean at `ansible-lint` production profile
   - Cilium CNI installed via Helm (v1.16.6); k8s packages from `pkgs.k8s.io/core:/stable:/v1.32`
+- `k8s/ollama/` – Helm values for Ollama, Open WebUI, and Qdrant (in-cluster AI inference stack)
 - `vps-docker/` – The "AI Cloud in a Box" Docker Compose stack (Ollama + WebUI + n8n)
 - `Makefile` – helper targets for running Terraform and Ansible locally
-
-<details>
-<summary>Legacy diagrams (v1)</summary>
-
-| AI Private Cloud Topology (v1) | Multi-Cloud Failover (v1) |
-|--------------------------------|---------------------------|
-| ![AI Private Cloud Topology (v1)](diagrams/ai-private-cloud-topology.png) | ![Multicloud Failover (v1)](diagrams/multicloud-failover.png) |
-
-</details>
