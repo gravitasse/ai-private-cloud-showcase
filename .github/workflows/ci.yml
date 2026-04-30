@@ -8,7 +8,7 @@ on:
 
 jobs:
   terraform:
-    name: Terraform validate
+    name: Terraform fmt check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,26 +18,10 @@ jobs:
         with:
           terraform_version: "~1.6"
 
+      # Full terraform validate runs in the private repo where the modules live.
+      # Showcase only checks formatting since private modules are not present here.
       - name: Terraform fmt check
         run: terraform fmt -check -recursive terraform/
-
-      - name: Terraform init + validate (AWS dev)
-        working-directory: terraform/envs/dev/aws
-        run: |
-          terraform init -backend=false
-          terraform validate
-
-      - name: Terraform init + validate (GCP dev)
-        working-directory: terraform/envs/dev/gcp
-        run: |
-          terraform init -backend=false
-          terraform validate
-
-      - name: Terraform init + validate (OpenStack)
-        working-directory: terraform/openstack
-        run: |
-          terraform init -backend=false
-          terraform validate
 
   ansible:
     name: Ansible lint
@@ -50,8 +34,14 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install ansible-lint
-        run: pip install ansible-lint
+      - name: Install ansible-lint and collections
+        run: |
+          pip install ansible-lint ansible-core
+          ansible-galaxy collection install \
+            kubernetes.core \
+            community.general \
+            amazon.aws \
+            community.aws
 
       - name: Run ansible-lint
         run: ansible-lint ansible/site.yml
