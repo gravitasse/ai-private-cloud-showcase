@@ -1,16 +1,19 @@
 - name: Add NVIDIA helm repo
-  command: helm repo add nvidia https://nvidia.github.io/gpu-operator
+  ansible.builtin.command: helm repo add nvidia https://nvidia.github.io/gpu-operator
   args:
     creates: /root/.local/share/helm/repository/nvidia-index.yaml
+  changed_when: false
 
 - name: Update helm repos
-  command: helm repo update
+  ansible.builtin.command: helm repo update
+  changed_when: false
 
 - name: Install NVIDIA GPU Operator
-  command: >
+  ansible.builtin.command: >
     helm upgrade --install gpu-operator nvidia/gpu-operator
     --namespace gpu-operator --create-namespace
   environment:
     KUBECONFIG: /etc/kubernetes/admin.conf
+  changed_when: false
   run_once: true
   delegate_to: "{{ groups['k8s_control'][0] }}"

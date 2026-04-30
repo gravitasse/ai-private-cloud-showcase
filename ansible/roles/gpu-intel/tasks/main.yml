@@ -1,18 +1,21 @@
 - name: Add Intel helm repo
-  command: helm repo add intel https://intel.github.io/helm-charts
+  ansible.builtin.command: helm repo add intel https://intel.github.io/helm-charts
+  changed_when: false
   run_once: true
   delegate_to: "{{ groups['k8s_control'][0] }}"
 
 - name: Update helm repos
-  command: helm repo update
+  ansible.builtin.command: helm repo update
+  changed_when: false
   run_once: true
   delegate_to: "{{ groups['k8s_control'][0] }}"
 
 - name: Install Intel device plugins operator
-  command: >
+  ansible.builtin.command: >
     helm upgrade --install intel-plugins intel/intel-device-plugins-operator
     --namespace intel-plugins --create-namespace
   environment:
     KUBECONFIG: /etc/kubernetes/admin.conf
+  changed_when: false
   run_once: true
   delegate_to: "{{ groups['k8s_control'][0] }}"

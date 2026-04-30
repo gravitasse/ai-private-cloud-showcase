@@ -1,0 +1,57 @@
+---
+# Velero Installation
+# Backup and Disaster Recovery
+
+- name: Create velero namespace
+  kubernetes.core.k8s:
+    name: velero
+    api_version: v1
+    kind: Namespace
+    state: present
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  run_once: true
+  delegate_to: "{{ groups['k8s_control'][0] }}"
+
+- name: Add VMware Tanzu Helm repo
+  kubernetes.core.helm_repository:
+    name: vmware-tanzu
+    repo_url: https://vmware-tanzu.github.io/helm-charts
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  run_once: true
+  delegate_to: "{{ groups['k8s_control'][0] }}"
+
+- name: Install Velero
+  kubernetes.core.helm:
+    name: velero
+    chart_ref: vmware-tanzu/velero
+    release_namespace: velero
+    create_namespace: true
+    values:
+      configuration:
+        provider: aws
+        backupStorageLocation:
+          bucket: "ai-private-cloud-backups"
+          config:
+            region: "us-east-1"
+        volumeSnapshotLocation:
+          config:
+            region: "us-east-1"
+      initContainers:
+        - name: Velero-plugin-for-aws
+          image: velero/velero-plugin-for-aws:v1.9.0
+          volumeMounts:
+            - mountPath: /target
+              name: plugins
+      credentials:
+        useSecret: true
+        secretContents:
+          cloud: |
+            [default]
+            aws_access_key_id = ${AWS_ACCESS_KEY_ID}
+            aws_secret_access_key = ${AWS_SECRET_ACCESS_KEY}
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  run_once: true
+  delegate_to: "{{ groups['k8s_control'][0] }}"

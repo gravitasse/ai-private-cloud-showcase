@@ -1,0 +1,51 @@
+---
+# Argo CD Installation
+# GitOps controller for application deployment
+
+- name: Create argocd namespace
+  kubernetes.core.k8s:
+    name: argocd
+    api_version: v1
+    kind: Namespace
+    state: present
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  run_once: true
+  delegate_to: "{{ groups['k8s_control'][0] }}"
+
+- name: Add Argo Helm repo
+  kubernetes.core.helm_repository:
+    name: argo
+    repo_url: https://argoproj.github.io/argo-helm
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  run_once: true
+  delegate_to: "{{ groups['k8s_control'][0] }}"
+
+- name: Install Argo CD
+  kubernetes.core.helm:
+    name: argocd
+    chart_ref: argo/argo-cd
+    release_namespace: argocd
+    create_namespace: true
+    values:
+      server:
+        extraArgs:
+          - --insecure  # For internal testing without valid certs
+        service:
+          type: ClusterIP
+      configs:
+        params:
+          server.insecure: true
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  run_once: true
+  delegate_to: "{{ groups['k8s_control'][0] }}"
+
+- name: Install Argo CD CLI
+  ansible.builtin.get_url:
+    url: https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+    dest: /usr/local/bin/argocd
+    mode: '0755'
+  become: true
+  when: ansible_os_family == "Debian"

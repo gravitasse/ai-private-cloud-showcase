@@ -1,0 +1,98 @@
+---
+# Monitoring Stack Installation
+# Prometheus, Grafana, AlertManager, and NVIDIA DCGM Exporter
+
+- name: Create monitoring namespace
+  kubernetes.core.k8s:
+    name: monitoring
+    api_version: v1
+    kind: Namespace
+    state: present
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  run_once: true
+  delegate_to: "{{ groups['k8s_control'][0] }}"
+
+- name: Add Prometheus Community Helm repo
+  kubernetes.core.helm_repository:
+    name: prometheus-community
+    repo_url: https://prometheus-community.github.io/helm-charts
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  run_once: true
+  delegate_to: "{{ groups['k8s_control'][0] }}"
+
+- name: Install kube-prometheus-stack
+  kubernetes.core.helm:
+    name: kube-prometheus-stack
+    chart_ref: prometheus-community/kube-prometheus-stack
+    release_namespace: monitoring
+    create_namespace: true
+    values:
+      grafana:
+        enabled: true
+        adminPassword: "admin"  # Change this in production!
+        persistence:
+          enabled: true
+          size: 10Gi
+        service:
+          type: ClusterIP
+      prometheus:
+        prometheusSpec:
+          retention: 15d
+          storageSpec:
+            volumeClaimTemplate:
+              spec:
+                accessModes: ["ReadWriteOnce"]
+                resources:
+                  requests:
+                    storage: 50Gi
+      alertmanager:
+        enabled: true
+        alertmanagerSpec:
+          storage:
+            volumeClaimTemplate:
+              spec:
+                accessModes: ["ReadWriteOnce"]
+                resources:
+                  requests:
+                    storage: 10Gi
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  run_once: true
+  delegate_to: "{{ groups['k8s_control'][0] }}"
+
+- name: Install NVIDIA DCGM Exporter
+  kubernetes.core.helm:
+    name: dcgm-exporter
+    chart_ref: nvidia/dcgm-exporter
+    release_namespace: monitoring
+    create_namespace: true
+    values:
+      serviceMonitor:
+        enabled: true
+        interval: 15s
+        additionalLabels:
+          release: kube-prometheus-stack
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  run_once: true
+  delegate_to: "{{ groups['k8s_control'][0] }}"
+
+- name: Create NVIDIA GPU Dashboard in Grafana
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: nvidia-dcgm-dashboard
+        namespace: monitoring
+        labels:
+          grafana_dashboard: "1"
+      data:
+        nvidia-dcgm.json: "{{ lookup('url', 'https://grafana.com/api/dashboards/12239/revisions/1/download', split_lines=False) }}"
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  run_once: true
+  delegate_to: "{{ groups['k8s_control'][0] }}"
