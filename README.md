@@ -5,6 +5,23 @@ It provides architecture diagrams, key design summaries, and a recruiter-safe de
 
 ---
 
+## 🔧 Recent Updates
+
+### April 2026 — Technical audit + full multi-platform hardening
+
+- Full technical accuracy review across Terraform, Ansible, and K8s manifests
+- Rewrote all Ansible compute roles to support **Debian/Ubuntu**, **RedHat/Rocky/Alma**, **macOS** (noop), **Windows** (noop), and **container environments** — a single playbook now runs correctly across all target types
+- Migrated all module references to FQCN (`ansible.builtin.*`); passes `ansible-lint` at the **production** profile with zero violations
+- Fixed Cilium CNI installation to use Helm (the `quick-install.yaml` manifest was removed upstream at v1.14)
+- Updated Kubernetes package repos from deprecated `apt.kubernetes.io` to `pkgs.k8s.io/core:/stable:/v1.32`
+- Corrected NVIDIA MIG profile config (A100-40GB has 7 compute slices; prior config listed 19)
+- Fixed Intel Gaudi NFD node selector label and pinned image to a real published tag
+- Fixed `nodeSelector` placement in GPU workload manifests (was inside container spec, not pod spec)
+- Fixed Terraform: K8s masters wired to **private** subnets; added missing `private_subnet_cidrs` variable wiring
+- All `terraform validate` passes clean across AWS and OpenStack environments
+
+---
+
 ## 🚀 AI Private Cloud Multi-Cloud Failover Platform
 
 This project demonstrates a **private AI cloud** architecture for **inference and training workloads**, supporting **multi-cloud redundancy**, **GPU acceleration**, and **Ollama-based LLM deployments** on Kubernetes.
