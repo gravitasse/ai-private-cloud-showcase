@@ -1,0 +1,56 @@
+# Helm values for rook-release/rook-ceph (operator chart)
+# Repo: helm repo add rook-release https://charts.rook.io/release
+# Install: helm upgrade --install rook-ceph rook-release/rook-ceph \
+#            -n rook-ceph --create-namespace -f rook-ceph-operator-values.yaml
+#
+# The operator chart deploys the Rook controller only.
+# The cluster (OSDs, monitors, managers) is deployed separately via rook-ceph-cluster-values.yaml.
+
+image:
+  tag: v1.15.3
+
+# Run the operator on control-plane nodes so it doesn't compete with GPU workloads
+nodeSelector:
+  node-role.kubernetes.io/control-plane: ""
+
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    effect: NoSchedule
+
+resources:
+  requests:
+    cpu: "200m"
+    memory: "256Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+
+# Enable CSI drivers for all three volume types
+csi:
+  enableRbdDriver: true        # Block volumes (RWO) — equivalent to Longhorn PVCs
+  enableCephfsDriver: true     # Shared filesystem (RWX) — multiple pods, distributed training
+  enableNFSDriver: false       # NFS not needed when CephFS is available
+
+  # CSI plugin resources — keep light so GPU nodes aren't starved
+  csiRBDPluginResource: |
+    - name: driver-registrar
+      resource:
+        requests:
+          memory: 64Mi
+          cpu: 50m
+        limits:
+          memory: 128Mi
+          cpu: 100m
+    - name: csi-rbdplugin
+      resource:
+        requests:
+          memory: 256Mi
+          cpu: 100m
+        limits:
+          memory: 512Mi
+          cpu: 200m
+
+# Enable the Ceph dashboard (exposed via CephCluster config below)
+enableDiscoveryDaemon: true
+
+logLevel: WARNING

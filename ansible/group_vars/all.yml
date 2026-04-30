@@ -1,6 +1,11 @@
 ---
-# ── Storage ────────────────────────────────────────────────────���──────────────
-# Options: 'longhorn', 'openebs', 'aws-fsx', 'none'
+# ── Storage ───────────────────────────────────────────────────────────────────
+# Options:
+#   'longhorn'    — replicated block storage, good default for most clusters
+#   'openebs'     — Mayastor NVMe-oF, lowest latency for NVMe-equipped nodes
+#   'aws-fsx'     — FSx for Lustre, highest throughput on AWS (requires IRSA)
+#   'rook-ceph'   — Ceph via Rook; block (RWO) + shared filesystem (RWX) + S3 object store
+#                   best for bare-metal / on-prem with dedicated OSD nodes
 storage_provider: "longhorn"
 
 # ── LLM Backend ───────────────────────────────────────────────────────────────

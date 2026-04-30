@@ -38,3 +38,16 @@
   become: true
   roles:
     - platform-apps
+
+- name: 06 High Availability Storage Layer
+  hosts: k8s_control
+  become: true
+  roles:
+    - role: storage-longhorn
+      when: storage_provider | default('longhorn') == 'longhorn'
+    - role: storage-openebs
+      when: storage_provider | default('longhorn') == 'openebs'
+    - role: storage-aws-fsx
+      when: storage_provider | default('longhorn') == 'aws-fsx'
+    - role: storage-rook-ceph
+      when: storage_provider | default('longhorn') == 'rook-ceph'

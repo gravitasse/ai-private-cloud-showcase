@@ -1,0 +1,152 @@
+# Helm values for rook-release/rook-ceph-cluster
+# Install: helm upgrade --install rook-ceph-cluster rook-release/rook-ceph-cluster \
+#            -n rook-ceph -f rook-ceph-cluster-values.yaml
+#
+# Deploys: CephCluster, StorageClasses (RBD block + CephFS shared), and Ceph Object Store (S3).
+#
+# Node requirements per OSD node:
+#   - At least one raw (unformatted) block device — NVMe recommended for GPU clusters
+#   - 4 CPU cores and 8GiB RAM minimum per OSD node
+#   - Label nodes: kubectl label node <node> storage-node=true
+
+operatorNamespace: rook-ceph
+
+cephClusterSpec:
+  # Pin to same version as operator
+  cephVersion:
+    image: quay.io/ceph/ceph:v19.2.0
+    allowUnsupported: false
+
+  # Only schedule Ceph daemons on nodes labeled storage-node=true
+  # This keeps monitors/OSDs off GPU worker nodes
+  placement:
+    all:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: storage-node
+                  operator: In
+                  values:
+                    - "true"
+
+  mon:
+    count: 3               # Always odd number for quorum
+    allowMultiplePerNode: false
+
+  mgr:
+    count: 2               # Active-standby manager for HA
+    modules:
+      - name: pg_autoscaler
+        enabled: true
+      - name: dashboard
+        enabled: true
+
+  dashboard:
+    enabled: true
+    ssl: false             # Set true + add TLS Secret in production
+
+  # Enable Ceph crash collection (feeds into alerting)
+  crashCollector:
+    disable: false
+
+  # OSD configuration — uses all available raw block devices on storage-labeled nodes
+  storage:
+    useAllNodes: false     # Only use nodes with storage-node=true label
+    useAllDevices: false
+    nodes: []              # Populated dynamically by Ansible (see storage-rook-ceph role)
+    # Example static entry:
+    # - name: "worker1"
+    #   devices:
+    #     - name: "nvme0n1"   # raw NVMe device — must be unformatted
+
+  resources:
+    mon:
+      requests: { cpu: "500m", memory: "1Gi" }
+      limits:   { cpu: "1",    memory: "2Gi" }
+    mgr:
+      requests: { cpu: "500m", memory: "1Gi" }
+      limits:   { cpu: "1",    memory: "2Gi" }
+    osd:
+      requests: { cpu: "1",    memory: "4Gi" }
+      limits:   { cpu: "2",    memory: "8Gi" }
+
+# ── StorageClasses ────────────────────────────────────────────────────────────
+
+cephBlockPools:
+  - name: ceph-block
+    spec:
+      failureDomain: host
+      replicated:
+        size: 3              # 3 replicas across 3 OSD nodes for HA
+    storageClass:
+      enabled: true
+      name: ceph-block
+      isDefault: true        # Default StorageClass — used by Ollama, Qdrant PVCs
+      reclaimPolicy: Retain
+      allowVolumeExpansion: true
+      parameters:
+        imageFormat: "2"
+        imageFeatures: layering
+        csi.storage.k8s.io/provisioner-secret-name: rook-csi-rbd-provisioner
+        csi.storage.k8s.io/provisioner-secret-namespace: rook-ceph
+        csi.storage.k8s.io/controller-expand-secret-name: rook-csi-rbd-provisioner
+        csi.storage.k8s.io/controller-expand-secret-namespace: rook-ceph
+        csi.storage.k8s.io/node-stage-secret-name: rook-csi-rbd-node
+        csi.storage.k8s.io/node-stage-secret-namespace: rook-ceph
+
+cephFileSystems:
+  - name: ceph-filesystem
+    spec:
+      metadataPool:
+        replicated:
+          size: 3
+      dataPools:
+        - name: data0
+          replicated:
+            size: 3
+      metadataServer:
+        activeCount: 1
+        activeStandby: true
+        resources:
+          requests: { cpu: "500m", memory: "1Gi" }
+          limits:   { cpu: "1",    memory: "2Gi" }
+    storageClass:
+      enabled: true
+      name: ceph-filesystem    # RWX — use for distributed training jobs sharing a dataset
+      reclaimPolicy: Retain
+      allowVolumeExpansion: true
+      parameters:
+        csi.storage.k8s.io/provisioner-secret-name: rook-csi-cephfs-provisioner
+        csi.storage.k8s.io/provisioner-secret-namespace: rook-ceph
+        csi.storage.k8s.io/controller-expand-secret-name: rook-csi-cephfs-provisioner
+        csi.storage.k8s.io/controller-expand-secret-namespace: rook-ceph
+        csi.storage.k8s.io/node-stage-secret-name: rook-csi-cephfs-node
+        csi.storage.k8s.io/node-stage-secret-namespace: rook-ceph
+
+# ── S3-compatible Object Store ────────────────────────────────────────────────
+# Stores model artifacts, datasets, and training checkpoints via S3 API.
+# Access via the rgw endpoint: http://rook-ceph-rgw-ceph-object.rook-ceph.svc
+
+cephObjectStores:
+  - name: ceph-object
+    spec:
+      metadataPool:
+        replicated:
+          size: 3
+      dataPool:
+        replicated:
+          size: 3
+      preservePoolsOnDelete: true
+      gateway:
+        port: 80
+        instances: 1
+        resources:
+          requests: { cpu: "500m", memory: "1Gi" }
+          limits:   { cpu: "1",    memory: "2Gi" }
+    storageClass:
+      enabled: true
+      name: ceph-bucket
+      reclaimPolicy: Delete
+      parameters:
+        region: us-east-1
