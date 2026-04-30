@@ -1,0 +1,52 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: always
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    # Uncomment the below section if deploying on a VPS with NVIDIA GPUs
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: always
+    ports:
+      - "3000:8080"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY:-default_insecure_secret}
+    volumes:
+      - open-webui_data:/app/backend/data
+    depends_on:
+      - ollama
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: n8n
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=${DOMAIN_NAME:-localhost}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+      - WEBHOOK_URL=http://${DOMAIN_NAME:-localhost}:5678/
+      - GENERIC_TIMEZONE=${TIMEZONE:-UTC}
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+volumes:
+  ollama_data:
+  open-webui_data:
+  n8n_data:

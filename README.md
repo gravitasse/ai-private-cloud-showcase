@@ -11,11 +11,12 @@ This project demonstrates a **private AI cloud** architecture for **inference an
 
 ### Key Capabilities
 - 🧩 **Terraform + Ansible** – full-stack Infrastructure-as-Code automation  
-- ☁️ **AWS (Primary)** & **GCP (Secondary)** – DNS-based failover (Route 53 health checks)  
+- ☁️ **AWS (Primary)** & **GCP (Secondary)** – Automated Route 53 DNS Failover  
 - 🎛️ **Kubernetes GPU clusters** – optimized for AI/ML (NVIDIA + Intel support)  
-- 🧠 **Ollama integration** – self-hosted LLM inference inside the private cluster  
-- 🔄 **Model / artifact sync** – replication between clouds for seamless failover  
-- 📊 **Observability** – Prometheus / Grafana / Loki pattern for monitoring  
+- 🧠 **Ollama & Open WebUI** – self-hosted LLM inference and RAG interface  
+- 🔄 **Modular Storage Layer** – pluggable architecture supporting Longhorn, OpenEBS, and AWS FSx  
+- 🛡️ **Zero-Trust Hardening** – AWS SSM secure access with strictly private subnets  
+- 🚀 **VPS Docker Edition** – a lightweight "AI Cloud in a Box" using Docker Compose
 
 ---
 
@@ -29,9 +30,9 @@ This project demonstrates a **private AI cloud** architecture for **inference an
 
 ## 💡 Use Cases
 - Private AI inference & LLM serving with **data sovereignty**  
-- Hybrid (on-prem + cloud) model training pipelines  
-- Zero-downtime **multi-cloud** AI infrastructure  
-- Self-hosted **Ollama**, **LM Studio**, **Open WebUI** clusters  
+- Zero-downtime **multi-cloud** AI infrastructure via Route 53 Load Balancing  
+- Agnostic Enterprise Storage using Longhorn or OpenEBS  
+- Self-hosted **Ollama**, **n8n**, and **Open WebUI** clusters  
 
 ---
 
@@ -44,13 +45,13 @@ This project demonstrates a **private AI cloud** architecture for **inference an
 This repo also includes the skeletal infrastructure code behind the diagrams:
 
 - `terraform/` – HCL modules and environments:
-  - `modules/network`, `modules/k8s-cluster`
+  - `modules/network`, `modules/k8s-cluster`, `modules/global-routing`
   - `envs/dev/aws` plus examples for OpenStack and inventory templating
-- `ansible/` – inventories, playbooks, and roles:
-  - `bootstrap`, `k8s-cluster`, `gpu-nodes`, `site.yml`
-  - roles for base OS, GPU nodes (Intel/NVIDIA), k8s control-plane/worker nodes, and platform apps
-- `tools/docker/` – dev container definition for a reproducible Terraform/Ansible CLI environment
-- `Makefile` – helper targets for running Terraform and Ansible locally or inside the dev container
+- `ansible/` – modular inventories, playbooks, and roles:
+  - `storage-longhorn`, `storage-openebs`, `storage-aws-fsx`
+  - roles for base OS, GPU nodes, k8s control-plane/worker nodes, and platform apps
+- `vps-docker/` – The "AI Cloud in a Box" Docker Compose stack (Ollama + WebUI + n8n)
+- `Makefile` – helper targets for running Terraform and Ansible locally
 
 <details>
 <summary>Legacy diagrams (v1)</summary>
