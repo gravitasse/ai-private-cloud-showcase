@@ -1,0 +1,67 @@
+# Helm values for llama-cpp-python server
+# Chart: https://github.com/nimbix/llama-cpp-python-chart (community) or run as raw Deployment
+# Alternatively deploy via the ghcr.io/ggerganov/llama.cpp:server image directly.
+#
+# llama.cpp advantages over Ollama:
+#   - Lower memory footprint via GGUF quantization (Q4_K_M = ~4GB for 7B)
+#   - Direct CUDA/Metal/Vulkan/CPU backends — no daemon overhead
+#   - Compatible with OpenAI /v1/chat/completions API
+#   - Useful for nodes with <8GB VRAM (T4, A10) or CPU-only inference
+#
+# Deployed alongside Ollama — each serves the same OpenAI-compatible API on different ports.
+# Open WebUI can point to either backend via OLLAMA_BASE_URL.
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/ggerganov/llama.cpp
+  tag: "server--cuda-b4286"   # Pin to a specific build; cuda variant for GPU nodes
+  pullPolicy: IfNotPresent
+
+args:
+  - "--host"
+  - "0.0.0.0"
+  - "--port"
+  - "8080"
+  - "--model"
+  - "/models/model.gguf"
+  - "--n-gpu-layers"
+  - "35"                      # Offload 35 layers to GPU; adjust for your VRAM budget
+  - "--ctx-size"
+  - "4096"
+  - "--threads"
+  - "4"
+
+# ── Model storage ─────────────────────────────────────────────────────────────
+# Mount a PVC containing pre-downloaded GGUF model files.
+# Download models from: https://huggingface.co/TheBloke (GGUF format)
+persistence:
+  enabled: true
+  storageClass: ""            # Use cluster default (Longhorn / Mayastor)
+  size: 20Gi
+  mountPath: /models
+  accessMode: ReadWriteOnce
+
+# ── Resources ─────────────────────────────────────────────────────────────────
+resources:
+  requests:
+    cpu: "2"
+    memory: "8Gi"
+    nvidia.com/gpu: "1"
+  limits:
+    cpu: "4"
+    memory: "16Gi"
+    nvidia.com/gpu: "1"
+
+nodeSelector:
+  nvidia.com/gpu.present: "true"
+
+tolerations:
+  - key: nvidia.com/gpu
+    operator: Exists
+    effect: NoSchedule
+
+# ── Service ───────────────────────────────────────────────────────────────────
+service:
+  type: ClusterIP
+  port: 8080

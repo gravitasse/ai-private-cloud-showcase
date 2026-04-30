@@ -1,0 +1,38 @@
+# Helm values for aws-fsx-csi-driver/aws-fsx-csi-driver
+# Repo: helm repo add aws-fsx-csi-driver https://kubernetes-sigs.github.io/aws-fsx-csi-driver/
+# Install: helm upgrade --install aws-fsx-csi-driver aws-fsx-csi-driver/aws-fsx-csi-driver \
+#            -n kube-system -f aws-fsx-values.yaml
+#
+# FSx for Lustre delivers sub-millisecond latency at 100s of GB/s throughput.
+# Ideal for distributed training (model shards, dataset streaming) on GPU nodes.
+#
+# Prerequisites:
+#   - FSx filesystem created by Terraform (terraform/modules/k8s-cluster outputs fs_id)
+#   - IRSA role with AmazonFSxFullAccess bound to the CSI driver service account
+
+controller:
+  serviceAccount:
+    create: true
+    name: fsx-csi-controller-sa
+    annotations:
+      # Replace with the IRSA role ARN output from your Terraform apply
+      eks.amazonaws.com/role-arn: "arn:aws:iam::ACCOUNT_ID:role/AmazonEKS_FSxLustre_CSI_DriverRole"
+
+node:
+  serviceAccount:
+    create: true
+    name: fsx-csi-node-sa
+
+# StorageClass for dynamic provisioning of FSx for Lustre volumes
+# Applied separately — see k8s/storage/fsx-storageclass.yaml
+storageClasses:
+  - name: fsx-lustre
+    parameters:
+      subnetId: "subnet-REPLACE_WITH_PRIVATE_SUBNET_ID"
+      securityGroupIds: "sg-REPLACE_WITH_K8S_NODE_SG_ID"
+      deploymentType: PERSISTENT_2
+      perUnitStorageThroughput: "500"   # MB/s per TiB — PERSISTENT_2 supports 125-1000
+      dataCompressionType: LZ4          # Transparent compression, minimal CPU overhead
+    reclaimPolicy: Retain
+    volumeBindingMode: WaitForFirstConsumer
+    allowVolumeExpansion: true

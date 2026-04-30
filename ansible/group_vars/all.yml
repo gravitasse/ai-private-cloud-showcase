@@ -1,0 +1,11 @@
+---
+# ── Storage ────────────────────────────────────────────────────���──────────────
+# Options: 'longhorn', 'openebs', 'aws-fsx', 'none'
+storage_provider: "longhorn"
+
+# ── LLM Backend ───────────────────────────────────────────────────────────────
+# Options:
+#   'ollama'     — full model management daemon, best for multi-model serving
+#   'llama-cpp'  — lightweight GGUF inference, lower VRAM, OpenAI-compatible API
+#   'both'       — deploy Ollama + llama.cpp side by side (different ports)
+llm_backend: "ollama"

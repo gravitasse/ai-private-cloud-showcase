@@ -1,0 +1,61 @@
+---
+- name: Add OpenEBS Helm repository
+  kubernetes.core.helm_repository:
+    name: openebs
+    repo_url: https://openebs.github.io/charts
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  run_once: true
+  delegate_to: "{{ groups['k8s_control'][0] }}"
+
+# Mayastor requires 2GiB hugepages per node — set in kernel at boot
+- name: Configure hugepages for Mayastor (Debian/Ubuntu)
+  ansible.builtin.lineinfile:
+    path: /etc/default/grub
+    regexp: '^GRUB_CMDLINE_LINUX='
+    line: 'GRUB_CMDLINE_LINUX="hugepagesz=2M hugepages=1024"'
+    backup: true
+  become: true
+  when: ansible_os_family == "Debian"
+  notify: Update grub
+
+- name: Configure hugepages for Mayastor (RedHat-family)
+  ansible.builtin.lineinfile:
+    path: /etc/default/grub
+    regexp: '^GRUB_CMDLINE_LINUX='
+    line: 'GRUB_CMDLINE_LINUX="hugepagesz=2M hugepages=1024"'
+    backup: true
+  become: true
+  when: ansible_os_family == "RedHat"
+  notify: Update grub
+
+- name: Load nvme_tcp kernel module
+  community.general.modprobe:
+    name: nvme_tcp
+    state: present
+    persistent: present
+  become: true
+  when: ansible_system == "Linux"
+
+- name: Deploy OpenEBS with Mayastor
+  kubernetes.core.helm:
+    name: openebs
+    chart_ref: openebs/openebs
+    chart_version: "4.1.1"
+    release_namespace: openebs
+    create_namespace: true
+    values_files:
+      - "{{ playbook_dir }}/../k8s/storage/openebs-values.yaml"
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  run_once: true
+  delegate_to: "{{ groups['k8s_control'][0] }}"
+
+- name: Wait for Mayastor io-engine daemonset
+  ansible.builtin.command: >
+    kubectl rollout status daemonset/openebs-mayastor-io-engine -n openebs --timeout=300s
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  changed_when: false
+  run_once: true
+  delegate_to: "{{ groups['k8s_control'][0] }}"

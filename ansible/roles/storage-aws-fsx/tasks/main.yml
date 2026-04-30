@@ -1,0 +1,32 @@
+---
+- name: Add AWS FSx CSI Helm repository
+  kubernetes.core.helm_repository:
+    name: aws-fsx-csi-driver
+    repo_url: https://kubernetes-sigs.github.io/aws-fsx-csi-driver/
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  run_once: true
+  delegate_to: "{{ groups['k8s_control'][0] }}"
+
+- name: Deploy AWS FSx CSI driver
+  kubernetes.core.helm:
+    name: aws-fsx-csi-driver
+    chart_ref: aws-fsx-csi-driver/aws-fsx-csi-driver
+    chart_version: "1.3.0"
+    release_namespace: kube-system
+    create_namespace: false
+    values_files:
+      - "{{ playbook_dir }}/../k8s/storage/aws-fsx-values.yaml"
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  run_once: true
+  delegate_to: "{{ groups['k8s_control'][0] }}"
+
+- name: Wait for FSx CSI controller rollout
+  ansible.builtin.command: >
+    kubectl rollout status deployment/fsx-csi-controller -n kube-system --timeout=120s
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  changed_when: false
+  run_once: true
+  delegate_to: "{{ groups['k8s_control'][0] }}"

@@ -1,0 +1,58 @@
+# Helm values for longhorn/longhorn chart
+# Repo: helm repo add longhorn https://charts.longhorn.io
+# Install: helm upgrade --install longhorn longhorn/longhorn -n longhorn-system --create-namespace -f longhorn-values.yaml
+#
+# Tuned for GPU node clusters with NVMe storage:
+#   - 3-replica HA for all persistent volumes (model weights, checkpoints, vector DBs)
+#   - Data path points to fast NVMe mount (change if your nodes use a different path)
+#   - Aggressive eviction thresholds to keep GPU nodes from filling up on model storage
+
+defaultSettings:
+  # Primary storage path — NVMe on GPU nodes; adjust to match your mount point
+  defaultDataPath: /var/lib/longhorn
+
+  # Replica count: 3 for HA, 2 for resource-constrained dev clusters
+  defaultReplicaCount: 3
+
+  # Delete pods on node failure so GPU workloads reschedule quickly
+  nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod
+
+  # Keep 20% of each node free — GPU nodes consume storage fast (model weights, checkpoints)
+  storageMinimalAvailablePercentage: 20
+
+  # Allow scheduling on nodes with storage tags only
+  createDefaultDiskLabeledNodes: true
+
+  # Snapshot retention
+  recurringJobMaxRetention: 10
+
+  # Faster replica rebuilds on GPU nodes (more bandwidth available)
+  replicaReplenishmentWaitInterval: 0
+
+  # Concurrent replica rebuilds per node — keep low to not starve GPU workloads
+  concurrentReplicaRebuildPerNodeLimit: 1
+
+  # Automatic cleanup of old snapshots
+  autoCleanupSystemGeneratedSnapshot: true
+
+persistence:
+  # Default StorageClass — used by Ollama, Qdrant, Open WebUI PVCs
+  defaultClass: true
+  defaultClassReplicaCount: 3
+  defaultFsType: ext4
+  reclaimPolicy: Retain       # Retain data on PVC delete — critical for model storage
+
+ingress:
+  enabled: false              # Enable with nginx/gateway if you want the Longhorn UI exposed
+
+longhornUI:
+  replicas: 1
+
+resources:
+  manager:
+    requests:
+      cpu: "250m"
+      memory: "256Mi"
+    limits:
+      cpu: "1"
+      memory: "512Mi"

@@ -1,0 +1,59 @@
+# Helm values for openebs/openebs chart
+# Repo: helm repo add openebs https://openebs.github.io/charts
+# Install: helm upgrade --install openebs openebs/openebs -n openebs --create-namespace -f openebs-values.yaml
+#
+# Mayastor (NVMe-oF) engine tuned for GPU nodes:
+#   - Uses NVMe devices directly via io_uring for lowest latency
+#   - Ideal for distributed training checkpoints and high-throughput vector DB reads
+
+mayastor:
+  enabled: true
+
+  # io_uring requires Linux 5.15+ — Ubuntu 22.04 ships 5.15 by default
+  ioEngine:
+    logLevel: warn
+    reactorMask: "0x3"         # Pin I/O reactor threads to cores 0-1, leave rest for GPU
+    resources:
+      requests:
+        cpu: "1"
+        memory: "1Gi"
+        hugepages-2Mi: "2Gi"  # Mayastor requires 2GiB hugepages per node
+      limits:
+        cpu: "2"
+        memory: "2Gi"
+        hugepages-2Mi: "2Gi"
+
+  csi:
+    node:
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "128Mi"
+        limits:
+          cpu: "500m"
+          memory: "256Mi"
+
+  etcd:
+    replicaCount: 3           # HA etcd for Mayastor control plane
+
+  localpv-provisioner:
+    enabled: false             # Use Mayastor NVMe-oF instead of hostPath volumes
+
+# Disable engines we're not using
+localprovisioner:
+  enabled: false
+
+ndm:
+  enabled: true               # Node Device Manager — discovers NVMe block devices
+  filters:
+    includePaths:
+      - /dev/nvme*            # Only manage NVMe devices on GPU nodes
+
+# StorageClass created by Mayastor
+storageClass:
+  name: mayastor-nvme
+  replicaCount: 3
+  protocol: nvmf
+  ioTimeout: "60"
+  fsType: ext4
+  reclaimPolicy: Retain
